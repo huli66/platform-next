@@ -3,10 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev --turbopack -p 4000",
     "build": "next build --turbopack",
+    "build:profile": "next build --turbopack --profile",
+    "build:analyze": "ANALYZE=true next build --turbopack",
+    "build:debug": "next build --turbopack --debug",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint --dir app"
   },
   "dependencies": {
     "react": "19.1.0",
