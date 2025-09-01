@@ -8,7 +8,7 @@
     "build:profile": "next build --turbopack --profile",
     "build:analyze": "ANALYZE=true next build --turbopack",
     "build:debug": "next build --turbopack --debug",
-    "start": "next start",
+    "start": "next start -p 4001",
     "lint": "eslint --dir app"
   },
   "dependencies": {
