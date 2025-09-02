@@ -30,6 +30,8 @@ export default function RootLayout({
       >
         <nav>
           <Link href="/">Home</Link>
+          <Link href="/intercepting">Intercepting</Link>
+          <Link href="/pingxing-route">PingxingRoute</Link>
         </nav>
         {children}
       </body>
