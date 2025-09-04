@@ -97,5 +97,51 @@ pnpm dlx shadcn@latest add button
   `(..)(..)photo` 上两级目录下的 photo
   `(...)photo` 根目录下的 photo
 
+  **显示拦截路由后用 router.back() 回到之前的路由(回到历史快照)，用 Link 不行**
+
   **遇到无法生效的情况或者无法解决的报错，尝试清除 .next 文件，重新运行项目**
+
+### 路由处理程序 API
+
+在前后端分离架构中，客户端与服务端通过 API 接口来交互，这个 API 接口在 Next.js 中被称呼为 路由处理程序
+
+`route.js` 文件，支持 `GET` `POST` `PUT` `DELETE` `HEAD` `OPTIONS` 传入了不支持的方法则返回 `405 Method Not Allowed`
+
+每个请求方法会被传入两个参数，`request` `context`，两个参数都是可选的
+
+用 `NextResponse` 返回消息比直接用 `Response` 更方便
+用 `NextRequest` 快捷读取请求和 cookie 等
+
+默认情况下使用 Response 和 NextResponse 的 GET 请求会被缓存（开发模式不会）
+Next.js 15 不再默认缓存了
+
+- 以下情况会退出缓存
+  - GET 请求使用了 Request 对象
+  - 添加了非 GET 请求
+  - 使用了 cookies, headers 等动态函数
+  - 路由段配置项手动声明为动态模式 `export const dynamic = 'force-dynamic'`
+
+- 设置缓存时效
+  - 路由段配置重新验证 `export const revalidate = 10` 超过设置时间的首次访问会先返回上次缓存再更新缓存
+  - 配置 `next.revalidate`，Next.js 拓展了原生的 fetch 方法，会自动缓存结果
+
+其他
+  - 获取 url `request.nextUrl.searchParams`
+  - 获取 cookie `request.cookies.get('token')` `import {cookies} from 'next/headers'`，新版本推荐第二种方法，此方法改变 cookies 的值后会自动携带响应头 `Set-Cookie`
+  - 处理 headers  `new Headers(request.headers)` `import {headers} from 'next/headers'` 同样推荐第二种，更方便，类型更友好
+  - 重定向 `import { redirect } from 'next/navigation'`
+  - 获取请求体内容 `request.json()` `request.formData()` 等
+  - 设置 CORS
+  - 响应无 UI 内容
+
+### 中间件
+
+`middleware.ts|js` 文件应该放在根目录下，有 `src` 时放在 `src` 下，否则不生效
+
+可以导出一个 config 对象，里面可以包括匹配规则 matcher 
+
+链式调用多个中间件，按照顺序执行
+可以通过配置给每个中间件添加匹配条件吗，还是需要每个中间件逻辑里自行添加
+
+
 
