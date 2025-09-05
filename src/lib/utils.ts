@@ -17,3 +17,7 @@ export function chain(functions: ((next: NextFunction) => NextResponse)[], index
   return () => NextResponse.next();
 }
 
+export function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+

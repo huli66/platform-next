@@ -143,5 +143,91 @@ Next.js 15 不再默认缓存了
 链式调用多个中间件，按照顺序执行
 可以通过配置给每个中间件添加匹配条件吗，还是需要每个中间件逻辑里自行添加
 
+## Render
+
+### page router 渲染方式
+
+- CSR 传统的 React 项目，Next.js 页面如果使用了 useEffect 等在客户端调用接口或者其他导致页面变化的功能都是 CSR
+- SSR 在服务端获取接口数据，page 路由下，使用 getServerSideProps（每次请求调用） 调用接口，结果当成属性传递给页面组件
+- SSG 静态站点生成，Next.js 页面不获取数据时默认使用的就是 SSG，需要获取数据时通过 getStaticProps（构建时调用）和 getStaticPaths 构建时生成页面，缓存分发
+- ISR 增量静态再生，在静态站点的基础上加上 revalidate 验证
+- 混合使用，SSG + CSR，或者 SSR + CSR，静态页面或者服务端渲染的页面作为首页，提高首屏加载速度，然后 CSR 提供交互功能（给普通 CSR 页面加上 getServerSideProps 或者 getStaticProps 函数）
+
+getServerSideProps 只能在 pages 目录下的页面直接使用，不能在普通组件中使用，如果页面不是被直接调用也不会生效
+
+更改老项目，可以考虑使用 Next.js 14 page router 模式
+
+### RSC & SSR
+
+SSR 的缺点
+SSR 通过 getServerSideProps 和 getStaticProps 在顶层获取数据在服务端渲染整个页面，生成的 HTML 是无法交互的 non-interactive UI，客户端渲染后还需要等待 JS 下载执行完，被赋予交互性，这个阶段被称为水合（Hydration），之后内容才可以交互，这些步骤是连续且阻塞的
+SSR 只作用于页面初始化加载，对于后续的交互更新并没有作用
+
+RSC 提供了更细粒度的组件渲染方式，组件直接获取数据，然后更新到页面，并且不会影响页面现有状态和交互性（要实现 SSR 效果也很简单，在最外层的服务端组件获取数据即可）
+
+**Next.js 的服务端组件实际上是融合了 RSC 和 SSR 技术的**
+
+### Suspense & Streaming
+
+`<Suspense>` 允许推迟渲染里面的内容，在 Next.js 中使用可以达到流式渲染的效果，在 html 文档中可以看到一些 B1 S2 之类的文案，应该是代表第几个 Suspense 第几个 Block，请求 Transfer-Encoding 也会是 
+
+Next.js 会等待 gennerateMetadata 内的数据请求完毕后再将 UI 流式传输到客户端，保证响应的第一部分就包含 head 标签
+因为 Streaming 是流式渲染，HTML 中会包含最终渲染的内容，所以不会影响 SEO
+
+如果希望按照顺序渲染多个 Suspense 中的内容，那么可以嵌套使用 Suspense，但是不同层级的异步请求还是同时发送的，不会叠加等待时间
+
+Suspense 背后的技术被称为 Streaming，可以有效阻止耗时长的请求阻塞整个页面加载，减少 TTFB 和 FCP，缩短 TTI
+
+Next.js 中实现 Streaming 的方式有两种，页面上使用 loading.tsx ，组件中使用 Suspense
+
+将先获取数据再进行水合的传统 SSR 改为渐进式水合
+存在缺点：用户下载的 JavaScript 代码没有减少，不需要交互的组件也必须在客户端进行水合，RSC 方案会解决这些问题（服务端组件的 js 不会打包发送到客户端，而是直接发送 RSC Payload）
+
+RSC 结合 Suspense 可以带来更好的性能体验
+
+### 服务端组件和客户端组件
+
+- 服务端组件的限制
+  - 不能添加交互和事件监听
+  - 不能使用状态和生命周期（useState, useEffect, useReducer 等）
+  - 不能使用浏览器 API
+  - 不能使用 React 类组件
+- 服务端组件优势
+  - 可以直接获取数据
+  - 可以直接访问后端资源
+  - 在服务端使用依赖包，减少客户端 JS 包大小
+  - 在服务端保留敏感信息（token 等）
+
+服务端组件只会在服务端渲染，客户端组件会在服务端渲染一次，然后在客户端渲染
+
+服务端组件运行在 构建时和服务端
+客户端组件运行在 构建时、服务端（生成初始的 HTML，比如 useState 的初始值直接代入 HTML）、客户端（管理 DOM）
+
+**服务端组件可以直接导入客户端组件，客户端组件不能直接导入服务端组件，但是可以将服务端组件以 props 的形式传给客户端组件**
 
 
+## 数据获取与缓存
+
+fetch 缓存
+cache 缓存
+
+在不同布局和页面之间使用相同数据，可以直接多次 fetch，利用其缓存机制？
+
+
+
+### Server Actions
+
+模块级别的 server action 在服务端组件和客户端组件都可以使用
+函数级别的只能在服务端使用
+
+Server Actions 的参数和返回值都需要是可序列化的
+
+
+
+
+
+TODO
+状态管理
+form 交互
+导出功能
+虚拟表格和排序
